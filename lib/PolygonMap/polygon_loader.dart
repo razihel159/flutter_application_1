@@ -34,22 +34,28 @@ List<TappablePolygon> _parseGeoJson(String geoJsonString, String assetPath, Stri
 
   for (var i = 0; i < features.length; i++) {
     final feature = features[i];
-    final int featureIndex = i;
     final properties = feature['properties'] as Map<String, dynamic>?;
-    String areaName = properties?['NAME_2'] ?? 
-                           properties?['NAME_1'] ?? 
-                           properties?['REGION'] ?? 
+    String areaName = properties?['ADM4_EN']?.toString() ??
+                           properties?['ADM3_EN']?.toString() ??
+                           properties?['NAME_2']?.toString() ??
+                           properties?['ADM2_EN']?.toString() ??
+                           properties?['NAME_1']?.toString() ??
+                           properties?['ADM1_EN']?.toString() ??
+                           properties?['REGION']?.toString() ??
                            'Unknown';
+
+    final String areaId = properties?['ADM4_PCODE']?.toString() ??
+        properties?['ADM3_PCODE']?.toString() ??
+        properties?['ADM2_PCODE']?.toString() ??
+        properties?['ADM1_PCODE']?.toString() ??
+        '${areaName.replaceAll(' ', '_')}_$i';
 
     // Use filename ID if name is not found in properties
     if ((areaName == 'Unknown' || areaName == 'NOT_FOUND') && filenameId != null) {
       areaName = filenameId;
     }
 
-    // Create a unique ID for each individual polygon to ensure unique data
-    final String individualId = '${areaName}_$featureIndex';
-
-    final int users = getSimulatedUserCount(individualId, level);
+    final int users = getSimulatedUserCount(areaId, level);
     Color areaColor;
 
     if (level == 'region') {
@@ -85,7 +91,9 @@ List<TappablePolygon> _parseGeoJson(String geoJsonString, String assetPath, Stri
       }
 
       polygons.add(TappablePolygon(
-        regionName: individualId, // Use the unique ID for tapping
+        id: areaId,
+        regionName: areaName,
+        userCount: users,
         properties: properties,
         points: points,
         color: areaColor,

@@ -1,14 +1,11 @@
+import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'polygon_model.dart';
 import '../utils/geometry.dart';
-import '../data/fake_data.dart';
-import 'polygon_loader.dart';
-
-enum _MapDetail { region, province, municity }
 
 class PolygonMapWidget extends StatefulWidget {
   final void Function(String name)? onRegionSelected;
@@ -20,118 +17,238 @@ class PolygonMapWidget extends StatefulWidget {
 
 class _PolygonMapWidgetState extends State<PolygonMapWidget> {
   final MapController _mapController = MapController();
+
+  // 1. State Variables
   List<TappablePolygon> _polygons = [];
   bool _isLoading = true;
-  
-  Timer? _debounceTimer;
-  _MapDetail _currentDetail = _MapDetail.region;
-  List<TappablePolygon> _provincePolygons = [];
-  String? _selectedAreaInfo;
-  String? _activeLocationKey;
+  String _currentLevel = 'regions';
+  String? _parentId;
+  int _userCount = 0;
+  String _selectedAreaName = 'Philippines';
+  final List<Map<String, dynamic>> _navigationHistory = [];
 
   @override
   void initState() {
     super.initState();
-    _loadInitialData();
+    _loadPolygons(_currentLevel, _parentId);
   }
 
-  Future<void> _loadInitialData() async {
-    final data = await loadPolygons(assetPath: 'assets/philippines.json', level: 'region');
-    if (mounted) {
-      setState(() {
-        _polygons = data;
-        _isLoading = false;
-      });
+  // 1. Data & Color Logic
+  Color _getAreaColor(int count) {
+    if (count > 100) {
+      return Colors.red.withAlpha((0.7 * 255).round());
+    } else if (count >= 50) {
+      return Colors.blue.withAlpha((0.7 * 255).round());
+    } else {
+      return Colors.green.withAlpha((0.7 * 255).round());
     }
   }
 
-  void _onPositionChanged(MapPosition position, bool hasGesture) {
-    _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
-      if (mounted) _updatePolygonsForZoom(position.zoom ?? 6.0, position.center);
+  // 2. Asset Loading Logic & 3. Feature Parsing
+  Future<void> _loadPolygons(String level, String? parentId) async {
+    if (!mounted) return;
+    setState(() {
+      _isLoading = true;
     });
-  }
 
-  Future<void> _updatePolygonsForZoom(double zoom, LatLng? center) async {
-    final target = zoom < 7.5 ? _MapDetail.region : (zoom < 10.5 ? _MapDetail.province : _MapDetail.municity);
-    List<TappablePolygon>? nextData;
+    // 1. Path Logic: Define the file location WITHOUT the 'assets/' prefix first.
+    String fileName;
+    switch (level) {
+      case 'provinces':
+        fileName = 'provinces_lowres/provinces-region-${parentId?.toLowerCase()}.0.001.json';
+        break;
+      case 'municities':
+        fileName = 'municities_lowres/municities-province-${parentId?.toLowerCase()}.0.001.json';
+        break;
+      case 'barangays':
+        // 1. File Naming Rules
+        fileName = 'barangays_lowres/barangays-municity-${parentId?.toLowerCase()}.0.001.json';
+        break;
+      case 'regions':
+      default:
+        // For the root: String fileName = 'philippines.json';
+        fileName = 'philippines.json';
+        break;
+    }
 
+    String path = ''; // Declare path here to make it accessible in the catch block
     try {
-      if (target == _MapDetail.region && _currentDetail != _MapDetail.region) {
-        _currentDetail = _MapDetail.region;
-        _activeLocationKey = null;
-        nextData = await loadPolygons(assetPath: 'assets/philippines.json', level: 'region');
-      } 
-      else if (target == _MapDetail.province && _currentDetail != _MapDetail.province) {
-        _currentDetail = _MapDetail.province;
-        nextData = await _loadAllProvincePolygons();
-      } 
-      else if (target == _MapDetail.municity && center != null) {
-        if (_provincePolygons.isEmpty) _provincePolygons = await _loadAllProvincePolygons();
-        final province = _provincePolygons.where((p) => isPointInPolygon(center, p.points)).firstOrNull;
-        
-        if (province != null) {
-          String? id = province.properties?['ADM2_PCODE']?.toString().toLowerCase();
-          id ??= province.properties?['NAME_1']?.toString().toLowerCase().replaceAll(' ', '-');
+      // 2. The Safe Loader: Use this exact logic to load the file so Flutter Web doesn't double the prefix:
+      // Instead of adding 'assets/' manually in the string,
+      // let the variable contain the full path only once.
+      path = fileName.startsWith('assets/') ? fileName : 'assets/$fileName';
+      // ignore: avoid_print
+      print('Loading: $path');
+      final String response = await rootBundle.loadString(path);
+      final geoJson = json.decode(response);
+      final features = geoJson['features'] as List<dynamic>;
+      final List<TappablePolygon> newPolygons = [];
+      final random = Random();
 
-          if (id != null && id != _activeLocationKey) {
-            final path = 'assets/municities_lowres/municities-province-$id.0.001.json';
-            final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-            if (manifest.listAssets().contains(path)) {
-              _currentDetail = _MapDetail.municity;
-              _activeLocationKey = id;
-              nextData = await loadPolygons(assetPath: path, level: 'municity');
+      for (var feature in features) {
+        final properties = feature['properties'] as Map<String, dynamic>?;
+
+        final String areaName = properties?['name']?.toString() ??
+            properties?['NAME_3']?.toString() ??
+            properties?['NAME_2']?.toString() ??
+            properties?['NAME_1']?.toString() ??
+            'Unknown';
+
+        // 4. Data Parsing
+        final String areaId = properties?['code']?.toString() ?? 
+            properties?['ID_3']?.toString() ??
+            properties?['ADM4_PCODE']?.toString() ??
+            properties?['ADM3_PCODE']?.toString() ??
+            properties?['ADM2_PCODE']?.toString() ??
+            properties?['ADM1_PCODE']?.toString() ??
+            '';
+
+        final geom = feature['geometry'] as Map<String, dynamic>?;
+        if (geom == null) continue;
+
+        final type = geom['type'] as String?;
+        final coordinates = geom['coordinates'] as List<dynamic>?;
+
+        final int mockCount = 1 + random.nextInt(150);
+
+        void addPolygon(List<dynamic> polygonCoords) {
+          final points = <LatLng>[];
+          for (final p in polygonCoords) {
+            points.add(LatLng((p[1] as num).toDouble(), (p[0] as num).toDouble()));
+          }
+
+          newPolygons.add(TappablePolygon(
+            id: areaId,
+            regionName: areaName,
+            userCount: mockCount,
+            properties: properties,
+            points: points,
+            color: _getAreaColor(mockCount),
+            borderColor: Colors.white.withAlpha((0.5 * 255).round()),
+            borderStrokeWidth: 0.5,
+            isFilled: true,
+          ));
+        }
+
+        if (type == 'Polygon') {
+          for (final polygon in coordinates!) {
+            addPolygon(polygon as List<dynamic>);
+          }
+        } else if (type == 'MultiPolygon') {
+          for (final multi in coordinates!) {
+            for (final polygon in multi) {
+              addPolygon(polygon as List<dynamic>);
             }
           }
         }
       }
 
-      if (nextData != null && mounted) {
+      if (mounted) {
         setState(() {
-          _polygons = nextData!;
-          _selectedAreaInfo = null;
+          _polygons = newPolygons; // Clear old data by replacing
+          _currentLevel = level;
+          _parentId = parentId;
+          _isLoading = false;
         });
       }
     } catch (e) {
-      debugPrint("Map Zoom Error: $e");
+      // 5. Safety
+      debugPrint("Error loading asset $path: $e");
+      if (mounted) {
+        setState(() {
+          _isLoading = false; // Stop loading indicator but don't clear map
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Map data for this area is not available yet.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
-  Future<List<TappablePolygon>> _loadAllProvincePolygons() async {
-    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
-    final files = manifest.listAssets().where((k) => k.startsWith('assets/provinces_lowres/') && k.endsWith('.json')).toList();
-    List<TappablePolygon> all = [];
-    for (var f in files) {
-      final data = await loadPolygons(assetPath: f, level: 'province');
-      all.addAll(data);
-    }
-    _provincePolygons = all;
-    return all;
-  }
-
-  void _handleTap(TapPosition tapPosition, LatLng point) {
-    String? newInfo;
-    String? selectedName;
-
-    // Iterate in reverse to find the top-most polygon
+  // 4. Visuals & Interaction
+  void _handleAreaTap(TapPosition tapPosition, LatLng point) {
+    TappablePolygon? tappedPolygon;
     for (final polygon in _polygons.reversed) {
       if (isPointInPolygon(point, polygon.points)) {
-        final String name = polygon.label ?? polygon.regionName;
-        final String level = _currentDetail == _MapDetail.region ? 'region' : (_currentDetail == _MapDetail.province ? 'province' : 'municity');
-        final int count = getSimulatedUserCount(name, level);
-
-        newInfo = 'Area: $name | Users: $count';
-        selectedName = name;
-        break; // Found the top-most, so we can stop
+        tappedPolygon = polygon;
+        break;
       }
     }
 
+    if (tappedPolygon == null) return;
+
+    // 4. Selection Logic
     setState(() {
-      _selectedAreaInfo = newInfo;
-      if (selectedName != null) {
-        widget.onRegionSelected?.call(selectedName);
-      }
+      _selectedAreaName = tappedPolygon!.regionName;
+      _userCount = tappedPolygon.userCount;
     });
+    widget.onRegionSelected?.call(tappedPolygon.regionName);
+
+    // 4. Final Level Check
+    if (_currentLevel == 'barangays') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Barangay: ${tappedPolygon.regionName} | Users: ${tappedPolygon.userCount}'),
+        ),
+      );
+      return;
+    }
+
+    // 3. Level Sequence
+    String nextLevel;
+
+    _navigationHistory.add({
+      'level': _currentLevel,
+      'parentId': _parentId,
+      'name': _selectedAreaName,
+      'count': _userCount,
+    });
+    switch (_currentLevel) {
+      case 'regions':
+        nextLevel = 'provinces';
+        break;
+      case 'provinces':
+        nextLevel = 'municities';
+        break;
+      case 'municities':
+        nextLevel = 'barangays';
+        break;
+      default:
+        return;
+    }
+
+    _loadPolygons(nextLevel, tappedPolygon.id);
+  }
+
+  // 2. Back Navigation
+  void _handleBack() {
+    if (_navigationHistory.isEmpty) return;
+
+    final prevState = _navigationHistory.removeLast();
+    final prevLevel = prevState['level'] as String;
+    final prevParentId = prevState['parentId'] as String?;
+    final prevName = prevState['name'] as String;
+    final prevCount = prevState['count'] as int;
+
+    setState(() {
+      _selectedAreaName = prevName;
+      _userCount = prevCount;
+    });
+
+    _loadPolygons(prevLevel, prevParentId);
+  }
+
+  void _resetMap() {
+    _navigationHistory.clear();
+    setState(() {
+      _selectedAreaName = 'Philippines';
+      _userCount = 0;
+    });
+    _loadPolygons('regions', null);
   }
 
   @override
@@ -142,40 +259,56 @@ class _PolygonMapWidgetState extends State<PolygonMapWidget> {
           mapController: _mapController,
           options: MapOptions(
             initialCenter: const LatLng(12.8797, 121.7740),
-            initialZoom: 6,
-            onPositionChanged: (pos, gesture) => _onPositionChanged(pos, gesture),
-            onTap: _handleTap,
+            initialZoom: 6, // Start with a view of the whole country
+            onTap: _handleAreaTap,
           ),
           children: [
             TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator())
-            else
-              PolygonLayer(
-                polygons: _polygons.map((e) => e as Polygon).toList(),
-                polygonCulling: true,
-              ),
+            PolygonLayer(
+              polygons: _polygons,
+              polygonCulling: true,
+            ),
           ],
         ),
-        if (_selectedAreaInfo != null)
-          Positioned(
-            top: 10,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Card(
-                elevation: 4,
-                color: Colors.white.withOpacity(0.9),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  child: Text(
-                    _selectedAreaInfo!,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87),
-                  ),
+        if (_isLoading) const Center(child: CircularProgressIndicator()),
+        // 3. UI Overlay
+        Positioned(
+          top: 10,
+          left: 0,
+          right: 0,
+          child: Center(
+            child: Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  '$_selectedAreaName\nRegistered Users: $_userCount',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ),
           ),
+        ),
+        if (_currentLevel != 'regions')
+          Positioned(
+            bottom: 20,
+            left: 20,
+            child: FloatingActionButton(
+              heroTag: 'backButton',
+              onPressed: _handleBack,
+              child: const Icon(Icons.arrow_back),
+            ),
+          ),
+        Positioned(
+          bottom: 20,
+          right: 20,
+          child: FloatingActionButton(
+            heroTag: 'resetButton',
+            onPressed: _resetMap,
+            child: const Icon(Icons.refresh),
+          ),
+        ),
       ],
     );
   }
