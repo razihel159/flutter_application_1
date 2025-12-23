@@ -61,21 +61,26 @@ List<TappablePolygon> _parseGeoJson(String geoJsonString, String assetPath, Stri
     if (level == 'region') {
       // Absolute thresholds for Region level to ensure full color range
       if (users > 11000) {
-        areaColor = Colors.red.withOpacity(0.6);
+        areaColor = Colors.red.withAlpha((0.6 * 255).round());
       } else if (users > 8000) {
-        areaColor = Colors.orange.withOpacity(0.6);
+        areaColor = Colors.orange.withAlpha((0.6 * 255).round());
       } else if (users > 5000) {
-        areaColor = Colors.green.withOpacity(0.6);
+        areaColor = Colors.green.withAlpha((0.6 * 255).round());
       } else {
-        areaColor = Colors.blue.withOpacity(0.6);
+        areaColor = Colors.blue.withAlpha((0.6 * 255).round());
       }
     } else {
       // Relative thresholds for Province and Municity levels
       int redThreshold = (level == 'province') ? 5000 : 800;
-      if (users > redThreshold) areaColor = Colors.red.withOpacity(0.6);
-      else if (users > redThreshold * 0.7) areaColor = Colors.orange.withOpacity(0.6);
-      else if (users > redThreshold * 0.35) areaColor = Colors.green.withOpacity(0.6);
-      else areaColor = Colors.blue.withOpacity(0.6);
+      if (users > redThreshold) {
+        areaColor = Colors.red.withAlpha((0.6 * 255).round());
+      } else if (users > redThreshold * 0.7) {
+        areaColor = Colors.orange.withAlpha((0.6 * 255).round());
+      } else if (users > redThreshold * 0.35) {
+        areaColor = Colors.green.withAlpha((0.6 * 255).round());
+      } else {
+        areaColor = Colors.blue.withAlpha((0.6 * 255).round());
+      }
     }
 
     final geom = feature['geometry'] as Map<String, dynamic>?;
@@ -97,17 +102,21 @@ List<TappablePolygon> _parseGeoJson(String geoJsonString, String assetPath, Stri
         properties: properties,
         points: points,
         color: areaColor,
-        borderColor: Colors.white.withOpacity(0.5),
+        borderColor: Colors.white.withAlpha((0.5 * 255).round()),
         borderStrokeWidth: 1.0,
         isFilled: true,
       ));
     }
 
     if (type == 'Polygon') {
-      for (final polygon in coordinates!) addRegionPolygon(polygon as List<dynamic>);
+      for (final polygon in coordinates!) {
+        addRegionPolygon(polygon as List<dynamic>);
+      }
     } else if (type == 'MultiPolygon') {
       for (final multi in coordinates!) {
-        for (final polygon in multi) addRegionPolygon(polygon as List<dynamic>);
+        for (final polygon in multi) {
+          addRegionPolygon(polygon as List<dynamic>);
+        }
       }
     }
   }

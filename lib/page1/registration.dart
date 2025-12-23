@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/widget/Button.dart';
-import 'package:flutter_application_1/PolygonMap/polygon_map_widget.dart';
 import 'package:flutter_application_1/osm_map/osm_map_widget.dart';
+import 'package:flutter_application_1/PolygonMap/polygon_map_widget.dart';
 
 class Registration extends StatefulWidget {
   const Registration({super.key});
@@ -13,7 +13,6 @@ enum MapDisplayMode { none, detailedOsm, polygon }
 
 class _RegistrationState extends State<Registration> {
   MapDisplayMode _mapMode = MapDisplayMode.none;
-  final TextEditingController _regionController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -49,37 +48,21 @@ class _RegistrationState extends State<Registration> {
           children: [
             const MyOSMMap(),
             Positioned(
-              top: 50, right: 20,
+              top: 40, right: 20,
               child: SimpleButton(
                 text: 'View Data Map',
-                onPressed: () => setState(() => _mapMode = MapDisplayMode.polygon),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: const Text('Data Map')), body: const PolygonMapWidget()))),
               ),
             ),
           ],
         );
+      // Map embedded in Registration has been removed. Use 'View Data Map' to open the consolidated Map screen.
       case MapDisplayMode.polygon:
-        return Column(
-          children: [
-            const SizedBox(height: 50),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: TextField(
-                controller: _regionController,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: 'Selected Area', 
-                  border: OutlineInputBorder(), 
-                  filled: true, 
-                  fillColor: Colors.white
-                ),
-              ),
-            ),
-            Expanded(
-              child: PolygonMapWidget(
-                onRegionSelected: (name) => setState(() => _regionController.text = name),
-              ),
-            ),
-          ],
+        return Center(
+          child: SimpleButton(
+            text: 'Open Map Screen',
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => Scaffold(appBar: AppBar(title: const Text('Data Map')), body: const PolygonMapWidget()))),
+          ),
         );
     }
   }
