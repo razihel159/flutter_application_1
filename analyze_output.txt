@@ -1,0 +1,39 @@
+﻿Analyzing flutter_application_1...
+
+  error - lib\page1\Registration.dart:91:19 - 'SimpleButton' isn't a function. Try correcting the name to match an existing function, or define a method or function named 'SimpleButton'. - invocation_of_non_function
+  error - lib\page1\Registration.dart:91:19 - The name 'SimpleButton' is defined in the libraries 'package:flutter_application_1/widget/Button.dart' and 'package:flutter_application_1/widget/button.dart'. Try using 'as prefix' for one of the import directives, or hiding the name from all but one of the imports. - ambiguous_import
+  error - lib\page1\Registration.dart:103:18 - 'SimpleButton' isn't a function. Try correcting the name to match an existing function, or define a method or function named 'SimpleButton'. - invocation_of_non_function
+  error - lib\page1\Registration.dart:103:18 - The name 'SimpleButton' is defined in the libraries 'package:flutter_application_1/widget/Button.dart' and 'package:flutter_application_1/widget/button.dart'. Try using 'as prefix' for one of the import directives, or hiding the name from all but one of the imports. - ambiguous_import
+  error - lib\page1\Registration.dart:105:71 - There's no constant named 'detailed_osm' in 'MapDisplayMode'. Try correcting the name to the name of an existing constant, or defining a constant named 'detailed_osm'. - undefined_enum_constant
+  error - lib\page1\Registration.dart:108:27 - There's no constant named 'detailed_osm' in 'MapDisplayMode'. Try correcting the name to the name of an existing constant, or defining a constant named 'detailed_osm'. - undefined_enum_constant
+  error - lib\page1\Registration.dart:169:1 - Directives must appear before any declarations. Try moving the directive before any declarations. - directive_after_declaration
+  error - lib\page1\Registration.dart:170:1 - Directives must appear before any declarations. Try moving the directive before any declarations. - directive_after_declaration
+  error - lib\page1\Registration.dart:171:1 - Directives must appear before any declarations. Try moving the directive before any declarations. - directive_after_declaration
+  error - lib\page1\Registration.dart:172:1 - Directives must appear before any declarations. Try moving the directive before any declarations. - directive_after_declaration
+  error - lib\page1\Registration.dart:173:1 - Directives must appear before any declarations. Try moving the directive before any declarations. - directive_after_declaration
+  error - lib\page1\Registration.dart:174:1 - Directives must appear before any declarations. Try moving the directive before any declarations. - directive_after_declaration
+  error - lib\page1\Registration.dart:175:1 - Directives must appear before any declarations. Try moving the directive before any declarations. - directive_after_declaration
+  error - lib\page1\Registration.dart:176:7 - The name 'Registration' is already defined. Try renaming one of the declarations. - duplicate_definition
+           - The first definition of this name at lib\page1\Registration.dart:10:7.
+  error - lib\page1\Registration.dart:183:6 - The name 'MapDisplayMode' is already defined. Try renaming one of the declarations. - duplicate_definition
+           - The first definition of this name at lib\page1\Registration.dart:17:6.
+  error - lib\page1\Registration.dart:189:7 - The name '_RegistrationState' is already defined. Try renaming one of the declarations. - duplicate_definition
+           - The first definition of this name at lib\page1\Registration.dart:23:7.
+  error - lib\page1\Registration.dart:257:19 - 'SimpleButton' isn't a function. Try correcting the name to match an existing function, or define a method or function named 'SimpleButton'. - invocation_of_non_function
+  error - lib\page1\Registration.dart:257:19 - The name 'SimpleButton' is defined in the libraries 'package:flutter_application_1/widget/Button.dart' and 'package:flutter_application_1/widget/button.dart'. Try using 'as prefix' for one of the import directives, or hiding the name from all but one of the imports. - ambiguous_import
+  error - lib\page1\Registration.dart:269:18 - 'SimpleButton' isn't a function. Try correcting the name to match an existing function, or define a method or function named 'SimpleButton'. - invocation_of_non_function
+  error - lib\page1\Registration.dart:269:18 - The name 'SimpleButton' is defined in the libraries 'package:flutter_application_1/widget/Button.dart' and 'package:flutter_application_1/widget/button.dart'. Try using 'as prefix' for one of the import directives, or hiding the name from all but one of the imports. - ambiguous_import
+  error - lib\page1\Registration.dart:271:71 - There's no constant named 'detailed_osm' in 'MapDisplayMode'. Try correcting the name to the name of an existing constant, or defining a constant named 'detailed_osm'. - undefined_enum_constant
+  error - lib\page1\Registration.dart:274:27 - There's no constant named 'detailed_osm' in 'MapDisplayMode'. Try correcting the name to the name of an existing constant, or defining a constant named 'detailed_osm'. - undefined_enum_constant
+  error - lib\page1\Registration.dart:327:7 - The name 'CountryStats' is already defined. Try renaming one of the declarations. - duplicate_definition
+           - The first definition of this name at lib\page1\Registration.dart:161:7.
+  error - lib\widget\Button.dart:22:1 - Directives must appear before any declarations. Try moving the directive before any declarations. - directive_after_declaration
+  error - lib\widget\Button.dart:24:7 - The name 'SimpleButton' is already defined. Try renaming one of the declarations. - duplicate_definition
+           - The first definition of this name at lib\widget\Button.dart:4:7.
+warning - lib\page1\Registration.dart:189:7 - The declaration '_RegistrationState' isn't referenced. Try removing the declaration of '_RegistrationState'. - unused_element
+warning - lib\widget\Button.dart:22:8 - Duplicate import. Try removing all but one import of the library. - duplicate_import
+   info - lib\PolygonMap\polygon_map_widget.dart:180:19 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+   info - lib\PolygonMap\polygon_map_widget.dart:181:30 - Use 'const' literals as arguments to constructors of '@immutable' classes. Try adding 'const' before the literal. - prefer_const_literals_to_create_immutables
+   info - lib\PolygonMap\polygon_map_widget.dart:182:23 - Use 'const' with the constructor to improve performance. Try adding the 'const' keyword to the constructor invocation. - prefer_const_constructors
+
+30 issues found.

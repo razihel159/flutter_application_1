@@ -1,0 +1,30 @@
+name: flutter_application_1
+description: "A new Flutter project for User Analysis Dashboard."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.10.4 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  syncfusion_flutter_maps: ^23.1.19
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/world_map.json
+    - assets/philippines.json
+    - assets/provinces_lowres/
+    - assets/municities_lowres/
+    - assets/barangays_lowres/

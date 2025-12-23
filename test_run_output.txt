@@ -1,0 +1,5 @@
+﻿00:00 +0: loading C:/Users/rheym/Downloads/Flutter_Project/flutter_application_1/test/polygon_loader_test.dart
+00:00 +0: C:/Users/rheym/Downloads/Flutter_Project/flutter_application_1/test/polygon_loader_test.dart: loadPolygons parses inline GeoJSON
+00:00 +1: C:/Users/rheym/Downloads/Flutter_Project/flutter_application_1/test/utils_geometry_test.dart: point in polygon - inside and outside
+00:00 +2: C:/Users/rheym/Downloads/Flutter_Project/flutter_application_1/test/widget_test.dart: Analysis map smoke test
+00:01 +3: All tests passed!

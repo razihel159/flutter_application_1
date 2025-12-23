@@ -1,0 +1,46 @@
+import 'dart:math';
+
+class Municipality {
+  final String name;
+  final int registeredUsers;
+  Municipality(this.name, this.registeredUsers);
+}
+
+class Province {
+  final String name;
+  final List<Municipality> municipalities;
+  Province(this.name, this.municipalities);
+
+  int get totalRegisteredUsers =>
+      municipalities.fold(0, (sum, item) => sum + item.registeredUsers);
+}
+
+class CountryDetails {
+  final String name;
+  final List<Province> provinces;
+  CountryDetails(this.name, this.provinces);
+
+  int get totalRegisteredUsers {
+    final total =
+        provinces.fold(0, (sum, item) => sum + item.totalRegisteredUsers);
+    return total.clamp(0, 15000) as int;
+  }
+}
+
+CountryDetails? getDetailedDataForCountry(String name) {
+  // Ginagamit ang name.hashCode para laging pareho ang "random" number ng isang lugar
+  final random = Random(name.hashCode);
+
+  final provinces = List.generate(random.nextInt(3) + 1, (i) {
+    final municipalities = List.generate(random.nextInt(5) + 2, (j) {
+      return Municipality(
+        'Muni ${j + 1}',
+        // Generate users between 50 and 2000 for more variety
+        random.nextInt(1951) + 50,
+      );
+    });
+    return Province('Prov $i', municipalities);
+  });
+
+  return CountryDetails(name, provinces);
+}
